@@ -122,12 +122,14 @@
                 }
             }
             /* parsers utils */
-            function buildParserCache(table,$headers) {
-                if(table.config.debug) { var parsersDebug = ""; }
-                var rows = table.tBodies[0].rows;
-                if(table.tBodies[0].rows[0]) {
+            function buildParserCache(table, $headers) {
+                if (table.config.debug) { var parsersDebug = ""; }
+                var rows = $(table).find("tbody tr");
+                if (table.tBodies[0].rows[0]) {
+                    var total_columns = rows[0].cells.length;
                     var list = [], cells = rows[0].cells, l = cells.length;
-                    for (var i = 0;i < l; i++) {
+                    for (var i = 0; i < total_columns; i++) {
+                        column = rows.find("td:nth-child(" + (i + 1) + ")")
                         var p = false;
                         if($.metadata && ($($headers[i]).metadata() && $($headers[i]).metadata().sorter)  ) {
                             p = getParserById($($headers[i]).metadata().sorter);
@@ -135,21 +137,23 @@
                             p = getParserById(table.config.headers[i].sorter);
                         }
                         if(!p) {
-                            p = detectParserForColumn(table,cells[i]);
+                            p = detectParserForColumn(table, column);
                         }
                         if(table.config.debug) { parsersDebug += "column:" + i + " parser:" + p.id + "\n"; }
                         list.push(p);
                     }
                 }
-                if(table.config.debug) { log(parsersDebug); }
+                if (table.config.debug) { log(parsersDebug); }
                 return list;
             };
-            function detectParserForColumn(table,node) {
-                var l = parsers.length;
-                for(var i = 1; i < l; i++) {
-                    if(parsers[i].is($.trim(getElementText(table.config, node)), table, node)) {
-                        return parsers[i];
-                    }
+            function detectParserForColumn(table, column) {
+                var total_parsers = parsers.length;
+                for(var i = 1; i < total_parsers; i++) {
+                    $.each(column, function(index, cell) {
+                        if (parsers[i].is($.trim(getElementText(table.config, cell)), table, cell)) {
+                            return parsers[i];
+                        }
+                    });
                 }
                 // 0 is always the generic parser (text)
                 return parsers[0];
@@ -541,10 +545,12 @@
             };
         }
     });
+
     // extend plugin scope
     $.fn.extend({
         tablesorter: $.tablesorter.construct
-    });
+    })
+
     var ts = $.tablesorter;
     // add default parsers
     ts.addParser({
