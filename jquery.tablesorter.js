@@ -84,6 +84,7 @@
  *
  * @author Christian Bach/christian.bach@polyester.se
  */
+
 (function($) {
     $.extend({
         tablesorter: new function() {
@@ -149,11 +150,12 @@
             function detectParserForColumn(table, column) {
                 var total_parsers = parsers.length;
                 for(var i = 1; i < total_parsers; i++) {
-                    $.each(column, function(index, cell) {
-                        if (parsers[i].is($.trim(getElementText(table.config, cell)), table, cell)) {
-                            return parsers[i];
-                        }
-                    });
+                    if (parsers[i].is(column, table.config)) {
+                        return parsers[i];
+                    }
+                    // if (parsers[i].is($.trim(getElementText(table.config, cell)), table, cell)) {
+                    //     return parsers[i];
+                    // }
                 }
                 // 0 is always the generic parser (text)
                 return parsers[0];
@@ -181,7 +183,7 @@
                         var c = table.tBodies[0].rows[i], cols = [];
                         cache.row.push($(c));
                         for(var j=0; j < totalCells; ++j) {
-                            cols.push(parsers[j].format(getElementText(table.config, c.cells[j]), table, c.cells[j]));
+                            cols.push(parsers[j].format($.tablesorter.getElementText(table.config, c.cells[j]), table, c.cells[j]));
                         }
                         cols.push(i); // add position for rowCache
                         cache.normalized.push(cols);
@@ -192,24 +194,6 @@
                 }
                 return cache;
             };
-            function getElementText(config, node) {
-                if (!node) return "";
-                var text = "";
-                if(config.textExtraction == "simple") {
-                    if(node.childNodes[0] && node.childNodes[0].hasChildNodes()) {
-                        text = node.childNodes[0].innerHTML;
-                    } else {
-                        text = node.innerHTML;
-                    }
-                } else {
-                    if(typeof(config.textExtraction) == "function") {
-                        text = config.textExtraction(node);
-                    } else {
-                        text = $(node).text();
-                    }
-                }
-                return text;
-            }
             function appendToTable(table,cache) {
                 if (table.config.debug) {
                     var appendTime = new Date();
@@ -508,6 +492,24 @@
                     applyWidget(this);
                 });
             };
+            this.getElementText = function(config, node) {
+                if (!node) return "";
+                var text = "";
+                if(config.textExtraction == "simple") {
+                    if(node.childNodes[0] && node.childNodes[0].hasChildNodes()) {
+                        text = node.childNodes[0].innerHTML;
+                    } else {
+                        text = node.innerHTML;
+                    }
+                } else {
+                    if(typeof(config.textExtraction) == "function") {
+                        text = config.textExtraction(node);
+                    } else {
+                        text = $(node).text();
+                    }
+                }
+                return text;
+            }
             this.addParser = function(parser) {
                 var l = parsers.length, a = true;
                 for(var i=0; i < l; i++) {
@@ -555,7 +557,7 @@
     // add default parsers
     ts.addParser({
         id: "text",
-        is: function(s) {
+        is: function(column, config) {
             return true;
         },
         format: function(s) {
@@ -565,9 +567,9 @@
     });
     ts.addParser({
         id: "digit",
-        is: function(s, table) {
-            var c = table.config;
-            return $.tablesorter.isDigit(s, c);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return $.tablesorter.isDigit(text, config);
         },
         format: function(s) {
             return $.tablesorter.formatFloat(s);
@@ -576,8 +578,9 @@
     });
     ts.addParser({
         id: "currency",
-        is: function(s) {
-            return /^[£$€?.]/.test(s);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /^[£$€?.]/.test(text);
         },
         format: function(s) {
             return $.tablesorter.formatFloat(s.replace(new RegExp(/[^0-9.]/g),""));
@@ -586,8 +589,9 @@
     });
     ts.addParser({
         id: "ipAddress",
-        is: function(s) {
-            return /^\d{2,3}[\.]\d{2,3}[\.]\d{2,3}[\.]\d{2,3}$/.test(s);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /^\d{2,3}[\.]\d{2,3}[\.]\d{2,3}[\.]\d{2,3}$/.test(text);
         },
         format: function(s) {
             var a = s.split("."), r = "", l = a.length;
@@ -605,8 +609,9 @@
     });
     ts.addParser({
         id: "url",
-        is: function(s) {
-            return /^(https?|ftp|file):\/\/$/.test(s);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /^(https?|ftp|file):\/\/$/.test(text);
         },
         format: function(s) {
             return jQuery.trim(s.replace(new RegExp(/(https?|ftp|file):\/\//),''));
@@ -615,8 +620,9 @@
     });
     ts.addParser({
         id: "isoDate",
-        is: function(s) {
-            return /^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/.test(s);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/.test(text);
         },
         format: function(s) {
             return $.tablesorter.formatFloat((s != "") ? new Date(s.replace(new RegExp(/-/g),"/")).getTime() : "0");
@@ -625,8 +631,9 @@
     });
     ts.addParser({
         id: "percent",
-        is: function(s) {
-            return /\%$/.test($.trim(s));
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /\%$/.test($.trim(text));
         },
         format: function(s) {
             return $.tablesorter.formatFloat(s.replace(new RegExp(/%/g),""));
@@ -635,8 +642,9 @@
     });
     ts.addParser({
         id: "usLongDate",
-        is: function(s) {
-            return s.match(new RegExp(/^[A-Za-z]{3,10}\.? [0-9]{1,2}, ([0-9]{4}|'?[0-9]{2}) (([0-2]?[0-9]:[0-5][0-9])|([0-1]?[0-9]:[0-5][0-9]\s(AM|PM)))$/));
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return text.match(new RegExp(/^[A-Za-z]{3,10}\.? [0-9]{1,2}, ([0-9]{4}|'?[0-9]{2}) (([0-2]?[0-9]:[0-5][0-9])|([0-1]?[0-9]:[0-5][0-9]\s(AM|PM)))$/));
         },
         format: function(s) {
             return $.tablesorter.formatFloat(new Date(s).getTime());
@@ -645,8 +653,9 @@
     });
     ts.addParser({
         id: "shortDate",
-        is: function(s) {
-            return /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(s);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(text);
         },
         format: function(s,table) {
             var c = table.config;
@@ -666,8 +675,9 @@
     });
     ts.addParser({
         id: "time",
-        is: function(s) {
-            return /^(([0-2]?[0-9]:[0-5][0-9])|([0-1]?[0-9]:[0-5][0-9]\s(am|pm)))$/.test(s);
+        is: function(column, config) {
+            text = $.trim($.tablesorter.getElementText(config, column[0]));
+            return /^(([0-2]?[0-9]:[0-5][0-9])|([0-1]?[0-9]:[0-5][0-9]\s(am|pm)))$/.test(text);
         },
         format: function(s) {
             return $.tablesorter.formatFloat(new Date("2000/01/01 " + s).getTime());
@@ -677,7 +687,7 @@
 
     ts.addParser({
         id: "metadata",
-        is: function(s) {
+        is: function(column, config) {
             return false;
         },
         format: function(s,table,cell) {
