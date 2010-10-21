@@ -17,9 +17,14 @@
 	$.tablesorter.addParser({
 		// set a unique id
 		id: 'grades',
-		is: function(s) {
-			// return false so this parser is not auto detected
-			return false;
+		is: function(column, config) {
+		  // Make sure every item in the column is either "good", "medium", or "bad"
+		  for (i = 0; i < column.length; i++) {
+		    if (!/^(good|medium|bad)$/.test(column[i].innerHTML)) {
+		      return false;
+		    }
+		  }
+			return true;
 		},
 		format: function(s) {
 			// format your data for normalization
@@ -28,15 +33,9 @@
 		// set type, either numeric or text
 		type: 'numeric'
 	});
-	
+
 	$(function() {
-		$("table").tablesorter({
-			headers: {
-				6: {
-					sorter:'grades'
-				}
-			}
-		});
+		$("table").tablesorter();
 	}); 				
 	</script>
 </head>
