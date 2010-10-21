@@ -149,16 +149,11 @@
             };
             function detectParserForColumn(table, column) {
                 var total_parsers = parsers.length;
-                for(var i = 1; i < total_parsers; i++) {
+                for(var i = total_parsers - 1; i >= 0; i--) {
                     if (parsers[i].is(column, table.config)) {
                         return parsers[i];
                     }
-                    // if (parsers[i].is($.trim(getElementText(table.config, cell)), table, cell)) {
-                    //     return parsers[i];
-                    // }
                 }
-                // 0 is always the generic parser (text)
-                return parsers[0];
             }
             function getParserById(name) {
                 var l = parsers.length;
@@ -684,7 +679,6 @@
         },
       type: "numeric"
     });
-
     ts.addParser({
         id: "metadata",
         is: function(column, config) {
