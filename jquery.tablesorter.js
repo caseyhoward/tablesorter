@@ -1,3 +1,5 @@
+/* See http://github.com/caseyhoward/tablesorter */
+
 /*
  *
  * TableSorter 2.0 - Client-side table sorting with ease!
